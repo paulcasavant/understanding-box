@@ -1,16 +1,23 @@
-from flask import Flask
+from flask import Flask, render_template
+from flask_socketio import SocketIO, send
+import os
+
+
 app = Flask(__name__)
+app.config['SECRET-KEY'] = os.urandom(24).hex()
+socketio = SocketIO(app)
 
 
 @app.route('/')
-def hello():
-    return "Hello World!"
+def index():
+    return render_template('index.html')
 
 
-@app.route('/<name>')
-def hello_name(name):
-    return "Hello {}!".format(name)
+@socketio.on('message')
+def handle_message(msg):
+    send(msg, broadcast=True)
 
 
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app, host='127.0.0.1', port=5000)
+

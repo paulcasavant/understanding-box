@@ -1,30 +1,49 @@
-#include <Arduino.h>
-#include <SocketIoClient.h>
+#include "WiFi.h"
+ 
+const int buttonPin = 14;
+const int ledPin = 2;
 
-// constants won't change. They're used here to set pin numbers:
-const int buttonPin = 14;     // the number of the pushbutton pin
-const int onboardLED =  2;      // the number of the LED pin
+const char* ssid = "FoxFi62";
+const char* password =  "babyman123";
 
-// variables will change:
-int buttonState = 0;         // variable for reading the pushbutton status
-
+int buttonState = 0;
+ 
 void setup() {
-  // // initialize the LED pin as an output:
-  // pinMode(onboardLED, OUTPUT);
-  // // initialize the pushbutton pin as an input:
-  // pinMode(buttonPin, INPUT);
+ 
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+
+  // Connect to Wi-Fi
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.println("Connecting to WiFi..");
+  }
+ 
+  Serial.println("Connected to the WiFi network");
+
+    // print your WiFi shield's IP address:
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP()); 
+ 
 }
+ 
+void loop() 
+{
+  buttonState = digitalRead(buttonPin);
 
-void loop() {
-  // // read the state of the pushbutton value:
-  // buttonState = digitalRead(buttonPin);
-
-  // // check if the pushbutton is pressed. If it is, the buttonState is HIGH:
-  // if (buttonState == HIGH) {
-  //   // turn LED on:
-  //   digitalWrite(onboardLED, HIGH);
-  // } else {
-  //   // turn LED off:
-  //   digitalWrite(onboardLED, LOW);
-  // }
+  if (buttonState)
+  {
+    digitalWrite(ledPin, HIGH);
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP()); 
+    Serial.print("ESP Board MAC Address:  ");
+    Serial.println(WiFi.macAddress());
+  }
+  else
+  {
+    digitalWrite(ledPin, LOW);
+  }
 }

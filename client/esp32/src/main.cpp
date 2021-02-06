@@ -1,12 +1,16 @@
 #include "WiFi.h"
+#include <WebSocketsClient.h> // TODO: Is this the right one?
+#include "password.h"
  
 const int buttonPin = 14;
 const int ledPin = 2;
 
 const char* ssid = "FoxFi62";
-const char* password =  "babyman123";
+const char* password =  WIFI_PASS;
 
 int buttonState = 0;
+
+WebSocketsClient webSocket;
 
 void setup() {
  
@@ -21,17 +25,21 @@ void setup() {
     delay(500);
     Serial.println("Connecting to WiFi..");
   }
- 
+  
+  // Connected to Wi-Fi
   Serial.println("Connected to the WiFi network");
-
-    // print your WiFi shield's IP address:
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP()); 
  
+ // Start WebSockets server
+ webSocket.begin("192.168.43.131", 5000);
 }
  
 void loop() 
 {
+  webSocket.loop();
+
+  
   buttonState = digitalRead(buttonPin);
 
   if (buttonState)
@@ -41,6 +49,7 @@ void loop()
     Serial.println(WiFi.localIP()); 
     Serial.print("ESP Board MAC Address:  ");
     Serial.println(WiFi.macAddress());
+    Serial.println(webSocket.isConnected());
   }
   else
   {

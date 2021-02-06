@@ -1,0 +1,1 @@
+static const char* WIFI_PASS = "babyman123";

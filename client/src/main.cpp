@@ -1,6 +1,7 @@
 #include "WiFi.h"
 #include <WebSocketsClient.h>
 #include "password.h"
+#include <ESP32Ping.h>
  
 const int BUTTON_PIN = 14;
 const int LED_PIN = 2;
@@ -14,46 +15,84 @@ WebSocketsClient webSocket;
 void setup() {
  
   // Init LED and button
-  pinMode(LEDD_PIN, OUTPUT);
+  pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
 
   // Connect to Wi-Fi
   Serial.begin(115200);
   WiFi.begin(SSID, PASSWORD);
  
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) 
+  {
     delay(500);
     Serial.println("Connecting to WiFi..");
   }
   
-  Serial.println("Connected to the WiFi network");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP()); 
- 
- // Start WebSockets server
-  webSocket.begin("192.168.43.131", 5000);
-  webSocket.setReconnectInterval(5000);  // try ever 5000 again if connection has failed
+  if (WiFi.status() == WL_CONNECTED)
+  {
+    Serial.println("Connected to the WiFi network");
+    Serial.print("IP Address: ");
+    Serial.println(WiFi.localIP());
+
+    // Start websocket
+    delay(500);
+    Serial.println("Starting WebSocket...");
+    webSocket.begin("10.55.25.121", 8080);
+
+    // Event handler
+    webSocket.onEvent(webSocketEvent);
+  }
+}
+
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
+  switch (type) {
+    case WStype_DISCONNECTED:
+      Serial.printf("[WSc] Disconnected!\n");
+      break;
+    case WStype_CONNECTED:
+      Serial.printf("[WSc] Connected to url: %s\n",  payload);
+      // send message to server when Connected
+      webSocket.sendTXT("Connected");
+      //webSocket.sendTXT("#E1");
+      break;
+    case WStype_TEXT:
+      Serial.printf("[WSc] get text: %s\n", payload);
+      // send message to server
+      // webSocket.sendTXT("message here");
+      break;
+    // case WStype_BIN:
+    //   Serial.printf("[WSc] get binary length: %u\n", length);
+    //   hexdump(payload, length);
+    //   // send data to server
+    //   // webSocket.sendBIN(payload, length);
+    //   break;
+  }
 }
  
 void loop() 
 {
   webSocket.loop();
 
-  
-  buttonState = digitalRead(buttonPin);
+  buttonState = digitalRead(BUTTON_PIN);
 
   if (buttonState)
   {
-    digitalWrite(ledPin, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     Serial.print("IP Address: ");
     Serial.println(WiFi.localIP()); 
     Serial.print("ESP Board MAC Address:  ");
     Serial.println(WiFi.macAddress());
-    Serial.println(webSocket.isConnected());
-    webSocket.sendTXT("{\"status\":\"OK\"}");
+
+    // Ping test
+    // bool success = Ping.ping("10.55.25.121", 3);
+    // if(!success){
+    //   Serial.println("Ping failed");
+    //   return;
+    // }
+    // Serial.println("Ping successful.");
   }
   else
   {
-    digitalWrite(ledPin, LOW);
+    digitalWrite(LED_PIN, LOW);
   }
 }

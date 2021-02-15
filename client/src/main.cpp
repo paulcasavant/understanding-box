@@ -65,7 +65,7 @@ void setup() {
     // Start websocket
     delay(500);
     Serial.println("Starting WebSockets...");
-    webSocket.begin("10.55.25.121", 8080, "/", "arduino");
+    webSocket.begin("192.168.43.131", 8080, "/", "arduino");
 
     // Event handler
     webSocket.onEvent(webSocketEvent);

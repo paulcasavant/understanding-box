@@ -1,7 +1,10 @@
 {
 	"folders": [
 		{
-			"name": "esp32",
+			"path": ".."
+		},
+		{
+			"name": "client",
 			"path": "."
 		}
 	],

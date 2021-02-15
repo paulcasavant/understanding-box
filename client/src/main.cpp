@@ -7,7 +7,10 @@ const int BUTTON_PIN = 14;
 const int LED_PIN = 2;
 
 /* Initilize variables */
-int buttonState = 0;
+int buttonState = LOW;
+int ledState = -1; // ledState < 0 if OFF, ledState > 0 if ON
+long lastDebounceTime = 0;  // The last time the output pin was toggled
+long debounceDelay = 200;    // The debounce time; increase if the output flickers
 
 WebSocketsClient webSocket;
 
@@ -18,8 +21,10 @@ WebSocketsClient webSocket;
  * @param payload the payload sent
  * @param length size of payload
  */
-void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
-  switch (type) {
+void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
+{
+  switch (type) 
+  {
     case WStype_ERROR:
       break;
 
@@ -67,10 +72,10 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length) {
     case WStype_PONG:
       break;
   }
-}
+} /* webSocketEvent */
 
-void setup() {
- 
+void setup() 
+{ 
   /* Initialize pins */
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
@@ -101,22 +106,32 @@ void setup() {
     /* Assign event WebSockets event handler */
     webSocket.onEvent(webSocketEvent);
   }
-}
+} /* setup */
  
 void loop() 
 {
   webSocket.loop();
 
+  /* Sample button state */
   buttonState = digitalRead(BUTTON_PIN);
 
-  if (buttonState)
+  /* Filter out any noise by setting a time buffer */
+  if ( (millis() - lastDebounceTime) > debounceDelay) 
   {
-      digitalWrite(LED_PIN, HIGH);
-      webSocket.sendTXT("Button pressed!");
-      delay(500)
+    /* If the button has been pressed, lets toggle the LED from "off to on" or "on to off" */
+    if ( (buttonState == HIGH) && (ledState < 0) ) 
+    {
+      webSocket.sendTXT("LED ON");
+      digitalWrite(LED_PIN, HIGH); // Turn LED ON
+      ledState = -ledState; // Now the LED is ON, change the state
+      lastDebounceTime = millis(); // Set the current state
+    }
+    else if ( (buttonState == HIGH) && (ledState > 0) ) 
+    {
+      webSocket.sendTXT("LED OFF");
+      digitalWrite(LED_PIN, LOW); // Turn LED OFF
+      ledState = -ledState; // Now the LED is OFF, change the state
+      lastDebounceTime = millis(); // Set the current time
+    }
   }
-  else
-  {
-    digitalWrite(LED_PIN, LOW);
-  }
-}
+} /* loop */

@@ -8,5 +8,12 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"xlocale": "cpp",
+			"xstring": "cpp",
+			"xutility": "cpp",
+			"string": "cpp"
+		}
+	}
 }

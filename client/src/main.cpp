@@ -5,12 +5,13 @@
 /* Declare constants */
 const int BUTTON_PIN = 14;
 const int LED_PIN = 2;
+const int BAUD_RATE = 115200;
 
 /* Initilize variables */
 int buttonState = LOW;
 int ledState = -1; // ledState < 0 if OFF, ledState > 0 if ON
 long lastDebounceTime = 0;  // The last time the output pin was toggled
-long debounceDelay = 200;    // The debounce time; increase if the output flickers
+long debounceDelay = 250;    // The debounce time in ms; increase if the output flickers
 
 WebSocketsClient webSocket;
 
@@ -20,7 +21,7 @@ WebSocketsClient webSocket;
  * @param type the type of event
  * @param payload the payload sent
  * @param length size of payload
- */
+ */ 
 void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
   switch (type) 
@@ -48,28 +49,30 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 
     case WStype_BIN:
       Serial.printf("[WebSocketsClient] Get binary length: %u\n", length);
-      // hexdump(payload, length);
-      
-      /* Send data to server */
-      // webSocket.sendBIN(payload, length);
       break;
 
     case WStype_FRAGMENT_TEXT_START:
+      Serial.printf("[WebSocketsClient] Event: WStype_FRAGMENT_TEXT_START\n");
       break;
 
     case WStype_FRAGMENT_BIN_START:
+      Serial.printf("[WebSocketsClient] Event: WStype_FRAGMENT_BIN_START\n");
       break;
 
     case WStype_FRAGMENT:
+      Serial.printf("[WebSocketsClient] Event: WStype_FRAGMENT\n");
       break;
 
     case WStype_FRAGMENT_FIN:
+      Serial.printf("[WebSocketsClient] Event: WStype_FRAGMENT_FIN\n");
       break;
 
     case WStype_PING:
+      Serial.printf("[WebSocketsClient] Event: WStype_PING\n");
       break;
 
     case WStype_PONG:
+      Serial.printf("[WebSocketsClient] Event: WStype_PONG\n");
       break;
   }
 } /* webSocketEvent */
@@ -80,15 +83,23 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
   pinMode(BUTTON_PIN, INPUT);
 
-  /* Connect to Wi-Fi network */
-  Serial.begin(115200);
+  Serial.printf("[ESP] MAC Address: %s\n", WiFi.macAddress().c_str());
+  
+  /* Initialize serial connection */
+  Serial.begin(BAUD_RATE);
+  Serial.printf("[ESP] Baud Rate: %d\n", BAUD_RATE);
+
+  /* Print MAC address */
+  Serial.printf("[ESP] MAC Address: %s\n", WiFi.macAddress().c_str());
+
+  /* Initialize WPA2 WiFi connection */
   WiFi.begin(WIFI_SSID, WIFI_PASS);
  
   /* Print status message until connected */
   while (WiFi.status() != WL_CONNECTED) 
   {
     delay(500);
-    Serial.println("[WiFi] Connecting...");
+    Serial.printf("[WiFi] Connecting...\n");
   }
   
   /* Once connected, print info and start WebSockets */
@@ -100,7 +111,7 @@ void setup()
     /* Start WebSockets */
     delay(500);
     Serial.println("[WebSocketsClient] Initializing...");
-    webSocket.begin("192.168.43.131", 8080, "/", "arduino");
+    webSocket.begin("10.55.11.213", 8080, "/", "arduino");
     Serial.println("[WebSocketsClient] Started");
 
     /* Assign event WebSockets event handler */
@@ -121,14 +132,14 @@ void loop()
     /* If the button has been pressed, lets toggle the LED from "off to on" or "on to off" */
     if ( (buttonState == HIGH) && (ledState < 0) ) 
     {
-      webSocket.sendTXT("LED ON");
+      webSocket.sendTXT("CONFUSED");
       digitalWrite(LED_PIN, HIGH); // Turn LED ON
       ledState = -ledState; // Now the LED is ON, change the state
       lastDebounceTime = millis(); // Set the current state
     }
     else if ( (buttonState == HIGH) && (ledState > 0) ) 
     {
-      webSocket.sendTXT("LED OFF");
+      webSocket.sendTXT("UNDERSTAND");
       digitalWrite(LED_PIN, LOW); // Turn LED OFF
       ledState = -ledState; // Now the LED is OFF, change the state
       lastDebounceTime = millis(); // Set the current time

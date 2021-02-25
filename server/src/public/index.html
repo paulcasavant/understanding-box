@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>Paul Is Hawt</title>
+    </head>
+    <body>
+        <h1 id="title">PAUL HOT OOOOHWEEEE</h1>
+        <script>
+            const websocket = new WebSocket("ws://localhost:8080");
+
+            websocket.onopen = () => {
+                console.log("Connected");
+                websocket.send(JSON.stringify({
+                    hello: "from_browser"
+                }));
+            };
+
+            websocket.onmessage = (msg) => {
+                document.getElementById("title").innerHTML = msg.data;
+            }
+        </script>
+    </body>
+</html>

@@ -44,7 +44,7 @@ void webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
       Serial.printf("[WebSocketsClient] Get text: %s\n", payload);
       
       /* Send message to the server */
-      webSocket.sendTXT("message here");
+      //webSocket.sendTXT("message here");
       break;
 
     case WStype_BIN:
@@ -111,7 +111,7 @@ void setup()
     /* Start WebSockets */
     delay(500);
     Serial.println("[WebSocketsClient] Initializing...");
-    webSocket.begin("10.55.11.213", 8080, "/", "arduino");
+    webSocket.begin("10.55.11.8", 8080, "/", "arduino");
     Serial.println("[WebSocketsClient] Started");
 
     /* Assign event WebSockets event handler */

@@ -3,15 +3,16 @@
 #include <WebSocketsClient.h>
 
 /* Declare constants */
-const int BUTTON_PIN = 14;
+const int SWITCH_PIN = 14;
 const int LED_PIN = 2;
 const int BAUD_RATE = 115200;
 
-/* Initilize variables */
-int buttonState = LOW;
-int ledState = -1; // ledState < 0 if OFF, ledState > 0 if ON
-long lastDebounceTime = 0;  // The last time the output pin was toggled
-long debounceDelay = 250;    // The debounce time in ms; increase if the output flickers
+/* Switch variables */
+int state = HIGH;      // the current state of the output pin
+int reading;           // the current reading from the input pin
+int previous = LOW;    // the previous reading from the input pin
+unsigned long millisTime = 0;         // the last time the output pin was toggled
+long debounce = 200;   // the debounce time, increase if the output flickers
 
 WebSocketsClient webSocket;
 
@@ -81,7 +82,7 @@ void setup()
 { 
   /* Initialize pins */
   pinMode(LED_PIN, OUTPUT);
-  pinMode(BUTTON_PIN, INPUT);
+  pinMode(SWITCH_PIN, INPUT);
 
   Serial.printf("[ESP] MAC Address: %s\n", WiFi.macAddress().c_str());
   
@@ -123,26 +124,28 @@ void loop()
 {
   webSocket.loop();
 
-  /* Sample button state */
-  buttonState = digitalRead(BUTTON_PIN);
 
-  /* Filter out any noise by setting a time buffer */
-  if ( (millis() - lastDebounceTime) > debounceDelay) 
-  {
-    /* If the button has been pressed, lets toggle the LED from "off to on" or "on to off" */
-    if ( (buttonState == HIGH) && (ledState < 0) ) 
+  reading = digitalRead(SWITCH_PIN);
+
+  // if the input just went from LOW and HIGH and we've waited long enough
+  // to ignore any noise on the circuit, toggle the output pin and remember
+  // the time
+  if (reading == HIGH && previous == LOW && millis() - millisTime > debounce) {
+    if (state == HIGH)
     {
-      webSocket.sendTXT("CONFUSED");
-      digitalWrite(LED_PIN, HIGH); // Turn LED ON
-      ledState = -ledState; // Now the LED is ON, change the state
-      lastDebounceTime = millis(); // Set the current state
-    }
-    else if ( (buttonState == HIGH) && (ledState > 0) ) 
-    {
+      state = LOW;
       webSocket.sendTXT("UNDERSTAND");
-      digitalWrite(LED_PIN, LOW); // Turn LED OFF
-      ledState = -ledState; // Now the LED is OFF, change the state
-      lastDebounceTime = millis(); // Set the current time
     }
+    else
+    {
+      state = HIGH;
+      webSocket.sendTXT("CONFUSED");
+    }
+
+    millisTime = millis();    
   }
+
+  digitalWrite(LED_PIN, state);
+
+  previous = reading;
 } /* loop */

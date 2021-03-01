@@ -10,7 +10,8 @@
             websocket.onopen = () => {
                 console.log("Connected");
                 websocket.send(JSON.stringify({
-                    hello: "from_browser"
+                    hello: "from_browser",
+                    message: "this is a message"
                 }));
             };
 

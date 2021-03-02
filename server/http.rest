@@ -1,0 +1,11 @@
+GET http://localhost:8080/clients
+
+###
+
+POST http://localhost:3000/add
+Content-Type: application/json
+
+{
+    title: 'test',
+    id: '5'
+}

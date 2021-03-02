@@ -19,37 +19,21 @@ const path = require("path");
       });
     });
 
+  // setup websocket handlers
+  wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(message) {
+      console.log('received: %s', message);
 
-  wss.on('connection', function(ws) {
-      CLIENTS.push(ws);
-      ws.on('message', function(message) {
-          console.log('received: %s', message);
-          sendAll(message);
-      });
-      ws.send("NEW USER JOINED");
-  });
-
-  function sendAll (message) {
-      for (var i=0; i<CLIENTS.length; i++) {
-          CLIENTS[i].send("Message: " + message);
+      if (message === '')
+      {
+        console.log('it is paul');
       }
-  }
 
-  // // setup websocket handlers
-  // wss.on('connection', function connection(ws) {
-  //   ws.on('message', function incoming(message) {
-  //     console.log('received: %s', message);
-
-  //     if (message === '')
-  //     {
-  //       console.log('it is paul');
-  //     }
-
-  //     // Array.from(wss.clients.values()).forEach((client) => {
-  //     //   client.send(message);
-  //     // });
-  //   });
-  // });
+      // Array.from(wss.clients.values()).forEach((client) => {
+      //   client.send(message);
+      // });
+    });
+  });
 
   // Listen on this port
   httpServer.listen(8080);

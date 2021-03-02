@@ -2,9 +2,10 @@ import express from 'express';
 import ws from 'ws';
 import http from 'http';
 import { v4 as uuidv4 } from 'uuid';
-//import products from "./example.js"; // TODO: Remove
+import path from 'path';
 
-const port = 8080;
+const PORT = 8080;
+const WEB_UUID = 'webpage' // Webpage UUID
 const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
@@ -25,30 +26,40 @@ var otherUUIDD = null;
   //   });
   // });
 
+  app.use(express.static(path.resolve("./public")))
+
   wss.on('connection', client => {
     clientUUID = uuidv4(); // Store UUID for this client
-
-    if (wss.clients.size === 1)
-    {
-      otherUUIDD = clientUUID;
-      client.send("i see you");
-    }
 
     clientMap.set(clientUUID, client);
     console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUID);
 
     client.on ('message', data => {
+      console.log('[Server] Received: %s', data);
 
-      if (data === 'website')
-      {
-        clientMap.set(client, "page")
+      if (data === 'identity_webpage') {
+        clientMap.set(WEB_UUID, client);
+        client.send('[Server] You are the webpage.')
+        console.log('[Server] Webpage is UUID=' + clientUUID);
       }
-      else if (data === requestuuid)
-      {
-        client.send(clientUUID);
+      /* Message was received from the webpage */
+      else if (client === clientMap.get('webpage')) {
+        client.send('[Server] You are the webpage.');
       }
+      /* Otherwise, message was received from a client */
+      else {
+        clientMap.get(WEB_UUID).send(data);
 
-      console.log('[Server] Recieved: %s', data);
+        switch(data) {
+          /* Request a message response with the UUID for this client */
+          case 'uuid':
+            client.send("[Server] UUID: " + clientUUID);
+            break;
+          
+          case 'custom':
+            client.send("[Server] You called the custom message!");
+        }
+      }
     })
 
     client.on('close', () => { 
@@ -58,5 +69,5 @@ var otherUUIDD = null;
     })
   })
 
-  httpServer.listen(port);
+  httpServer.listen(PORT);
 })();

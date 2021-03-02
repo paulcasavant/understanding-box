@@ -3,18 +3,17 @@
         <title>Understanding Box</title>
     </head>
     <body>
-        <h1 id="title">The page title</h1>
+        <h1 id='title'>The page title</h1>
         <script>
             const ws = new WebSocket("ws://localhost:8080");
         
             ws.onopen = function(event) {
-                console.log("HTML WebSocket is open now");
-                
-                ws.send("Message from HTML");
+                console.log('[Webpage] Connected');
+                ws.send("identity_webpage");
             };
 
             ws.onmessage = function(event) {
-                console.log("Message HTML received: %s", event.data);
+                document.getElementById('title').innerHTML = event.data;
             }
         </script>
     </body>

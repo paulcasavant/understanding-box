@@ -9,6 +9,8 @@ const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
 let clientMap = new Map(); // Unique IDs for currently connected clients
+var clientUUID; // Holds the UUID for the client
+var otherUUIDD = null;
 
 (function main() {
   // Request, response callback function
@@ -24,17 +26,35 @@ let clientMap = new Map(); // Unique IDs for currently connected clients
   // });
 
   wss.on('connection', client => {
-    console.log('[Server] Client connected (Total: %d)', wss.clients.size);
+    clientUUID = uuidv4(); // Store UUID for this client
 
-    clientMap.set(uuidv4(), client);
-    console.log('Clients Size: %d', clientMap.size);
+    if (wss.clients.size === 1)
+    {
+      otherUUIDD = clientUUID;
+      client.send("i see you");
+    }
+
+    clientMap.set(clientUUID, client);
+    console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUID);
 
     client.on ('message', data => {
+
+      if (data === 'website')
+      {
+        clientMap.set(client, "page")
+      }
+      else if (data === requestuuid)
+      {
+        client.send(clientUUID);
+      }
+
       console.log('[Server] Recieved: %s', data);
-      client.send(data.toUpperCase());
     })
-    client.on('close', () => {
-      console.log('Client has disconnected');
+
+    client.on('close', () => { 
+      clientMap.delete(clientUUID);
+      console.log('[Server] Client disconnected (Total: %d)', wss.clients.size);
+      console.log('Clients Size: %d', clientMap.size);
     })
   })
 

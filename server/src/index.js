@@ -1,3 +1,6 @@
+// TODO: Create constants file 
+// TODO: Use try/catches?
+// FIXME: Does webpage only register on open?
 import express from 'express';
 import ws from 'ws';
 import http from 'http';
@@ -6,12 +9,14 @@ import path from 'path';
 
 const PORT = 8080;
 const WEB_UUID = 'webpage' // Webpage UUID
+const CLIENT_CONNECT = 'client_connect';
+const IDENTITY_WEBPAGE = 'identity_webpage';
+const UPDATE = 'update';
 const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
-let clientMap = new Map(); // Unique IDs for currently connected clients
+let clientMap = new Map(); // UniqueIDs for currently connected clients
 var clientUUID; // Holds the UUID for the client
-var otherUUIDD = null;
 
 (function main() {
   // Request, response callback function
@@ -34,10 +39,20 @@ var otherUUIDD = null;
     clientMap.set(clientUUID, client);
     console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUID);
 
+    /* If the webpage has registered, notify of client connection */
+    if (clientMap.has(WEB_UUID)) {
+      clientMap.get(WEB_UUID).send(JSON.stringify({
+        type: UPDATE,
+        message: CLIENT_CONNECT,
+        size: wss.clients.size
+      }))
+    }
+
     client.on ('message', data => {
       console.log('[Server] Received: %s', data);
 
-      if (data === 'identity_webpage') {
+      /* If client identifies as the webpage */
+      if (data === IDENTITY_WEBPAGE) {
         clientMap.set(WEB_UUID, client);
         client.send('[Server] You are the webpage.')
         console.log('[Server] Webpage is UUID=' + clientUUID);
@@ -66,6 +81,16 @@ var otherUUIDD = null;
       clientMap.delete(clientUUID);
       console.log('[Server] Client disconnected (Total: %d)', wss.clients.size);
       console.log('Clients Size: %d', clientMap.size);
+
+    /* If the webpage has registered, notify of client disconnection */
+    if (clientMap.has(WEB_UUID)) {
+      clientMap.get(WEB_UUID).send(JSON.stringify({
+        type: UPDATE,
+        message: CLIENT_CONNECT,
+        size: wss.clients.size
+      }))
+    }
+    
     })
   })
 

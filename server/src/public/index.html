@@ -5,6 +5,7 @@
     <body>
         <h1 id='title'>The page title</h1>
         <p id='num_clients'></p>
+        <p id='understanding'></p>
         <script>
             // TODO: Client count will not register when webpage has to reconnect
             const ws = new WebSocket("ws://localhost:8080");
@@ -24,6 +25,7 @@
                 {
                     case 'update':
                         document.getElementById('num_clients').innerHTML = "Clients: " + JSON.parse(event.data).size;
+                        document.getElementById('understanding').innerHTML = "Understanding: " + JSON.parse(event.data).status;
                     break;
                 }
             }

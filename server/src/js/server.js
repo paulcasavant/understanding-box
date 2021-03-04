@@ -22,7 +22,6 @@ const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
 
-// FIXME: Webpage gets new UUID every refresh because the WS reruns
 (function main() {
   /* Host the HTML in the ./public folder */
   app.use(express.static(path.resolve('../')))
@@ -33,51 +32,48 @@ const wss = new ws.Server({ server: httpServer });
     clientMap.set(clientUUID, client); // Store the map of this client to UUID
     understandMap.set(clientUUID, true); // Understanding bool for this client is true initially
     
+    /* Print client connection status */
     console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUID);
 
-    /* If the webpage has registered, notify of client connection */
-    if (clientMap.has(WEB_UUID)) {
-      clientMap.get(WEB_UUID).send(JSON.stringify({
-        type: MESSAGE_TYPES.UPDATE,
-        status: understandStatus(),
-        size: wss.clients.size
-      }))
-    }
+    /* Update webpage with client connection */
+    updateWebpage()
 
     client.on ('message', data => {
+
+      /* Print message that was received */
       console.log('[Server] Received: %s', data);
 
-      /* If client identifies as the webpage */
+      /* If client sends message identifying it as the webpage */
       if (data === MESSAGE_TYPES.WEBPAGE) {
-        clientMap.set(WEB_UUID, client);
-        client.send('[Server] You are the webpage.')
+        clientMap.set(WEB_UUID, client); // Set webpage UUID to map to the client
+
+        /* Print webpage connection status */
         console.log('[Server] Webpage is UUID=' + clientUUID);
       }
-      /* Message was received from the webpage */
+
+      /* If message was received from the webpage */
       else if (client === clientMap.get('webpage')) {
         client.send('[Server] You are the webpage.');
       }
-      /* Otherwise, message was received from a client */
-      else {
-        clientMap.get(WEB_UUID).send(JSON.stringify({
-          type: MESSAGE_TYPES.UPDATE,
-          status: understandStatus(),
-          size: wss.clients.size
-        }))
 
+      /* Otherwise, message was received from a client */
+      else
+      {
         switch(data) {
           /* Client sets status to understand */
           case 'understand':
             understandMap.set(clientUUID, true);
+            updateWebpage();
             break;
 
           /* Client sets status to confused */
           case 'confused':
             understandMap.set(clientUUID, false);
+            updateWebpage();
             break;
 
           /* Client requests their UUID */
-          case 'uuid':
+          case 'uuid':s
             client.send("[Server] UUID: " + clientUUID);
             break;
 
@@ -86,13 +82,16 @@ const wss = new ws.Server({ server: httpServer });
             if (understandMap.get(clientUUID))
             {
               client.send("This client understands.");
+
             }
             else
             {
               client.send("This client is confused.");
             }
+            break;
           case 'custom':
             client.send("[Server] You called the custom message!");
+            break;
         }
       }
     })
@@ -102,7 +101,7 @@ const wss = new ws.Server({ server: httpServer });
       console.log('[Server] Client disconnected (Total: %d)', wss.clients.size);
       console.log('Clients Size: %d', clientMap.size);
 
-      /* If the webpage has registered, notify of webpage client disconnection */
+      /* Update webpage with client disconnection */
       updateWebpage();
     })
   })
@@ -126,13 +125,15 @@ function understandStatus()
 }
 
 /* If the webpage has registered, send an update to the webpage */
-function updateWebpage(status)
+function updateWebpage()
 {
   if (clientMap.has(WEB_UUID)) {
     clientMap.get(WEB_UUID).send(JSON.stringify({
-      type: status,
+      type: MESSAGE_TYPES.UPDATE,
       status: understandStatus(),
       size: wss.clients.size
     })) 
   }
+
+  return 0;
 }

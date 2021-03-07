@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import * as MESSAGE_TYPES from './messageTypes.js'
 
-const PORT = 8080; // Server listener port
-const WEB_UUID = 'webpage' // UUID assigned to the webpage
+const PORT = 8080; // Port to listen on
+const WEB_UUID = 'webpage' // UUID to be assigned to the webpage
 
 /* Initialize structures for storing client data */
 let clientUUIDMap = new Map(); // Maps client to UUID
@@ -44,7 +44,6 @@ const wss = new ws.Server({ server: httpServer });
 
       /* If client sends message identifying it as the webpage */
       if (data === MESSAGE_TYPES.WEBPAGE) {
-        console.log("size before: %d", understandMap.size);
         understandMap.delete(client); // Remove from understandMap since it is the webpage
         console.log("size after: %d", understandMap.size)
         clientUUIDMap.set(WEB_UUID, client) // Correspond webpage UUID to client 
@@ -113,7 +112,10 @@ const wss = new ws.Server({ server: httpServer });
   httpServer.listen(PORT);
 })();
 
-function understandStatus()
+/**
+ * Returns the number of clients that currently understand.
+ */
+function numUnderstand()
 {
   var count = 0;
 
@@ -128,13 +130,31 @@ function understandStatus()
   return count;
 }
 
-/* If the webpage has registered, send an update to the webpage */
+/**
+ * Returns the number of clients that understand as a percentage.
+ */
+function percentUnderstand()
+{
+  var percentage = 0;
+
+  /* If there are clients other than the webpage */
+  if (wss.clients.size > 1)
+  {
+    return parseFloat(numUnderstand() / (wss.clients.size - 1) * 100).toFixed(2) + "%"
+  }
+
+  return percentage;
+}
+
+/**
+ * Sends an update to the webpage with the latest data.
+ */
 function updateWebpage()
 {
   if (clientUUIDMap.has(WEB_UUID)) {
     clientUUIDMap.get(WEB_UUID).send(JSON.stringify({
       type: MESSAGE_TYPES.UPDATE,
-      status: understandStatus(),
+      status: percentUnderstand(),
       size: wss.clients.size - 1 // Minus 1 to adjust for count of webpage
     })) 
   }

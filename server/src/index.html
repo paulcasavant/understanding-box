@@ -3,8 +3,33 @@
         <title>DSS</title>
     </head>
     <body>
-        <h1 id='title'>The page title</h1>
+        <h1 id='title'>Digital Student Survey</h1>
         <p id='num_clients'></p>
         <p id='understanding'></p>
-        <script type="module", src='js/webpage.js'></script>
+        <p style="color:red;">Displays the class's level of understanding level in realtime.</p>
+        <script>
+            /* Register WS on current IP address */
+            const ws = new WebSocket("ws://" + self.location.host);
+
+            ws.onopen = function(event) {
+                ws.send('webpage');
+                console.log('[Webpage] Connected to WebSocket');
+                alert(self.location.host)
+            };
+
+            ws.onmessage = function(event) {
+                //document.getElementById('title').innerHTML = JSON.parse(event.data).type;
+                //document.getElementById('custom').innerHTML = JSON.parse(event.data).type;
+
+                // TODO: Probably need error trapping here, showing error in webpage console
+                /* Switch between message types */
+                switch(JSON.parse(event.data).type)
+                {
+                    case 'update':
+                        document.getElementById('num_clients').innerHTML = "Clients: " + JSON.parse(event.data).size;
+                        document.getElementById('understanding').innerHTML = "Understanding: " + JSON.parse(event.data).status;
+                    break;
+                }
+            }
+        </script>
     </body>

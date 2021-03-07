@@ -1,4 +1,3 @@
-// TODO: Create constants file 
 // TODO: Use try/catches?
 // FIXME: Does webpage only register on open?
 import express from 'express';
@@ -12,32 +11,31 @@ const PORT = 8080; // Server listener port
 const WEB_UUID = 'webpage' // UUID assigned to the webpage
 
 /* Initialize structures for storing client data */
-let clientMap = new Map(); // Maps client UUID to client object
+let clientUUIDMap = new Map(); // Maps client to UUID
 let understandMap = new Map(); // Maps UUID to understanding bool
-var clientUUID = 0; // Holds the UUID for the current client
-var webpageOnline = false; // Status flag indicating whether the webpage client is online
 
 /* Intialize WS on express HTTP server */
 const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
 
+// FIXME: Need to use concurrency data structure?
 (function main() {
   /* Host the HTML in the ./public folder */
   app.use(express.static(path.resolve('../')))
 
   /* If a client connected */
   wss.on('connection', client => {
-    clientUUID = uuidv4(); // Assign a randomized UUID to this client
-    clientMap.set(clientUUID, client); // Store the map of this client to UUID
-    understandMap.set(clientUUID, true); // Understanding bool for this client is true initially
+    clientUUIDMap.set(client, uuidv4()); // Store the map of this client to UUID
+    understandMap.set(client, true); // Maps client to understanding bool 
     
-    /* Print client connection status */
-    console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUID);
-
     /* Update webpage with client connection */
     updateWebpage()
+ 
+    /* Print client connection status */
+    console.log('[Server] Client %d connected, UUID=%s', wss.clients.size, clientUUIDMap.get(client));
 
+    /* Handler for receiving message */
     client.on ('message', data => {
 
       /* Print message that was received */
@@ -45,41 +43,48 @@ const wss = new ws.Server({ server: httpServer });
 
       /* If client sends message identifying it as the webpage */
       if (data === MESSAGE_TYPES.WEBPAGE) {
-        clientMap.set(WEB_UUID, client); // Set webpage UUID to map to the client
+        console.log("size before: %d", understandMap.size);
+        understandMap.delete(client); // Remove from understandMap since it is the webpage
+        console.log("size after: %d", understandMap.size)
+        clientUUIDMap.set(WEB_UUID, client) // Correspond webpage UUID to client 
+        clientUUIDMap.set(client, WEB_UUID); // Correspond client to webpage UUID
+
+        updateWebpage(); // Send first update to webpage
 
         /* Print webpage connection status */
-        console.log('[Server] Webpage is UUID=' + clientUUID);
+        console.log('[Server] Webpage connected.');
       }
 
       /* If message was received from the webpage */
-      else if (client === clientMap.get('webpage')) {
+      else if (client === clientUUIDMap.get(WEB_UUID)) {
         client.send('[Server] You are the webpage.');
       }
 
       /* Otherwise, message was received from a client */
       else
       {
+        /* Switch for handling different message types */
         switch(data) {
           /* Client sets status to understand */
           case 'understand':
-            understandMap.set(clientUUID, true);
+            understandMap.set(client, true);
             updateWebpage();
             break;
 
           /* Client sets status to confused */
           case 'confused':
-            understandMap.set(clientUUID, false);
+            understandMap.set(client, false);
             updateWebpage();
             break;
 
           /* Client requests their UUID */
-          case 'uuid':s
-            client.send("[Server] UUID: " + clientUUID);
+          case 'uuid':
+            client.send("[Server] UUID: " + clientUUIDMap.get(client));
             break;
 
           /* Client requests their current understanding status */
           case 'status':
-            if (understandMap.get(clientUUID))
+            if (understandMap.get(client))
             {
               client.send("This client understands.");
 
@@ -89,17 +94,15 @@ const wss = new ws.Server({ server: httpServer });
               client.send("This client is confused.");
             }
             break;
-          case 'custom':
-            client.send("[Server] You called the custom message!");
-            break;
         }
       }
     })
 
+    // FIXME: Handle webpage?
     client.on('close', () => { 
-      clientMap.delete(clientUUID);
+      understandMap.delete(client);
+      clientUUIDMap.delete(client);
       console.log('[Server] Client disconnected (Total: %d)', wss.clients.size);
-      console.log('Clients Size: %d', clientMap.size);
 
       /* Update webpage with client disconnection */
       updateWebpage();
@@ -111,11 +114,11 @@ const wss = new ws.Server({ server: httpServer });
 
 function understandStatus()
 {
-  let count = 0;
+  var count = 0;
 
-  for (let uuid of understandMap.keys())
+  for (let aClient of understandMap.keys())
   {
-    if (clientMap.get(uuid))
+    if (understandMap.get(aClient))
     {
       count++;
     }
@@ -127,11 +130,11 @@ function understandStatus()
 /* If the webpage has registered, send an update to the webpage */
 function updateWebpage()
 {
-  if (clientMap.has(WEB_UUID)) {
-    clientMap.get(WEB_UUID).send(JSON.stringify({
+  if (clientUUIDMap.has(WEB_UUID)) {
+    clientUUIDMap.get(WEB_UUID).send(JSON.stringify({
       type: MESSAGE_TYPES.UPDATE,
       status: understandStatus(),
-      size: wss.clients.size
+      size: wss.clients.size - 1 // Minus 1 to adjust for count of webpage
     })) 
   }
 

@@ -1,5 +1,6 @@
 // TODO: Use try/catches?
 // FIXME: Does webpage only register on open?
+// TODO: Currently only supports one webpage. They end up updating the understanding count
 import express from 'express';
 import ws from 'ws';
 import http from 'http';

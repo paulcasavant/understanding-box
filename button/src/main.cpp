@@ -122,7 +122,7 @@ void setup()
     /* Start WebSockets */
     delay(500);
     Serial.println("[WebSocketsClient] Initializing...");
-    webSocket.begin("10.55.11.213", 8080, "/", "arduino");
+    webSocket.begin("10.55.29.163", 8080, "/", "arduino");
     Serial.println("[WebSocketsClient] Started");
 
     /* Assign event WebSockets event handler */
@@ -145,13 +145,13 @@ void loop()
   if (reading == HIGH && previous == LOW && millis() - millisTime > debounce) {
     if (state == HIGH)
     {
+      webSocket.sendTXT("understand");
       state = LOW;
-      webSocket.sendTXT(stringJSON);
     }
     else
     {
+      webSocket.sendTXT("confused");
       state = HIGH;
-      webSocket.sendTXT("CONFUSED");
     }
 
     millisTime = millis();    

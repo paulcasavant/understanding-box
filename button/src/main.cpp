@@ -122,7 +122,7 @@ void setup()
     /* Start WebSockets */
     delay(500);
     Serial.println("[WebSocketsClient] Initializing...");
-    webSocket.begin("10.55.29.163", 8080, "/", "arduino");
+    webSocket.begin("10.55.24.131", 8080, "/", "arduino");
     Serial.println("[WebSocketsClient] Started");
 
     /* Assign event WebSockets event handler */
@@ -132,6 +132,7 @@ void setup()
 
 } /* setup */
   
+int prevState = HIGH;
 
 void loop() 
 {
@@ -139,25 +140,17 @@ void loop()
 
   reading = digitalRead(SWITCH_PIN);
 
-  // if the input just went from LOW and HIGH and we've waited long enough
-  // to ignore any noise on the circuit, toggle the output pin and remember
-  // the time
-  if (reading == HIGH && previous == LOW && millis() - millisTime > debounce) {
-    if (state == HIGH)
+  if (reading != prevState)
+  {
+    if (reading == HIGH)
     {
       webSocket.sendTXT("understand");
-      state = LOW;
+      prevState = HIGH;
     }
     else
     {
       webSocket.sendTXT("confused");
-      state = HIGH;
+      prevState = LOW;
     }
-
-    millisTime = millis();    
   }
-
-  digitalWrite(LED_PIN, state);
-
-  previous = reading;
 } /* loop */

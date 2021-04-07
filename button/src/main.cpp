@@ -9,11 +9,8 @@ const int LED_PIN = 2;
 const int BAUD_RATE = 115200;
 
 /* Switch variables */
-int state = HIGH; // the current state of the output pin
-int reading; // the current reading from the input pin
-int previous = LOW; // the previous reading from the input pin
-long millisTime = 0; // the last time the output pin was toggled
-long debounce = 200; // the debounce time, increase if the output flickers
+int reading = LOW; // the current reading from the input pin
+int prevState = HIGH;
 
 /* JSON data payload */
 StaticJsonDocument<200> doc; // TODO: Consider resizing
@@ -132,8 +129,6 @@ void setup()
 
 } /* setup */
   
-int prevState = HIGH;
-
 void loop() 
 {
   webSocket.loop();

@@ -1,6 +1,4 @@
-// TODO: Use try/catches?
-// FIXME: Does webpage only register on open?
-// TODO: Currently only supports one webpage. They end up updating the understanding count
+// TODO: Server does not detect that clients have left
 import express from 'express';
 import ws from 'ws';
 import http from 'http';
@@ -20,7 +18,6 @@ const app = express();
 const httpServer = http.createServer(app);
 const wss = new ws.Server({ server: httpServer });
 
-// FIXME: Need to use concurrency data structure?
 (function main() {
   /* Host the HTML in the ./public folder */
   app.use(express.static(path.resolve('../')))
@@ -98,7 +95,6 @@ const wss = new ws.Server({ server: httpServer });
       }
     })
 
-    // FIXME: Handle webpage?
     client.on('close', () => { 
       understandMap.delete(client);
       clientUUIDMap.delete(client);

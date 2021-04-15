@@ -7,6 +7,8 @@
 const int SWITCH_PIN = 14;
 const int LED_PIN = 2;
 const int BAUD_RATE = 115200;
+const int SERVER_PORT = 8080;
+const char* SERVER_IP = "10.55.29.163";
 
 /* The number of times the switch must read HIGH before sending
 a WebSockets message notifying the server to change state to HIGH. */
@@ -130,7 +132,7 @@ void setup()
     /* Start WebSockets */
     delay(500);
     Serial.println("[WebSocketsClient] Initializing...");
-    webSocket.begin("10.55.24.131", 8080, "/", "arduino");
+    webSocket.begin(SERVER_IP, SERVER_PORT, "/", "arduino");
     Serial.println("[WebSocketsClient] Started");
 
     /* Assign event WebSockets event handler */

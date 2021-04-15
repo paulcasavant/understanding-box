@@ -10,7 +10,13 @@ const int BAUD_RATE = 115200;
 
 /* Switch variables */
 int reading = LOW; // the current reading from the input pin
-int prevState = HIGH;
+int prevState = reading;
+int lastTime = 0;
+int debounce = 1000;
+bool state = false;
+bool lastState = false;
+bool enable = false;
+int count = 0;
 
 /* JSON data payload */
 StaticJsonDocument<200> doc; // TODO: Consider resizing
@@ -124,28 +130,32 @@ void setup()
 
     /* Assign event WebSockets event handler */
     webSocket.onEvent(webSocketEvent);
+
+    reading = digitalRead(SWITCH_PIN);
+    lastState = reading;
   }
-
-
 } /* setup */
   
-void loop() 
+void loop()
 {
   webSocket.loop();
-
   reading = digitalRead(SWITCH_PIN);
 
-  if (reading != prevState)
+  if (reading)
   {
-    if (reading == HIGH)
-    {
-      webSocket.sendTXT("understand");
-      prevState = HIGH;
-    }
-    else
-    {
-      webSocket.sendTXT("confused");
-      prevState = LOW;
-    }
+    count++;
+  }
+  else
+  {
+    count = 0;
+  }
+
+  if (reading && count > 10)
+  {
+    webSocket.sendTXT("understand");
+  }
+  else
+  {
+    webSocket.sendTXT("confused");
   }
 } /* loop */

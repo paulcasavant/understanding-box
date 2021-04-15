@@ -8,18 +8,23 @@ const int SWITCH_PIN = 14;
 const int LED_PIN = 2;
 const int BAUD_RATE = 115200;
 
-/* Switch variables */
-int reading = LOW; // the current reading from the input pin
-int prevState = reading;
-int lastTime = 0;
-int debounce = 1000;
-bool state = false;
-bool lastState = false;
-bool enable = false;
-int count = 0;
+/* The number of times the switch must read HIGH before sending
+a WebSockets message notifying the server to change state to HIGH. */
+const int highCount = 500; 
+
+/* Delay determines the rate at which WebSockets messages are 
+dispatched to the server */
+int msgDelay = 300;
+
+/* Counts the number iterations the switch is
+HIGH without going LOW */
+int count = 0; 
+
+int reading = LOW; // Current reading from the switch
+int lastTime = 0; // The last time a message was sent
 
 /* JSON data payload */
-StaticJsonDocument<200> doc; // TODO: Consider resizing
+StaticJsonDocument<200> doc;
 String stringJSON;
 
 WebSocketsClient webSocket;
@@ -130,32 +135,49 @@ void setup()
 
     /* Assign event WebSockets event handler */
     webSocket.onEvent(webSocketEvent);
-
-    reading = digitalRead(SWITCH_PIN);
-    lastState = reading;
   }
 } /* setup */
   
 void loop()
 {
   webSocket.loop();
+
+  /* Read the current status of the switch */
   reading = digitalRead(SWITCH_PIN);
 
+  /* If switch is HIGH, increment a count */
   if (reading)
   {
     count++;
   }
+  /* Otherwise, reset the count */
   else
   {
     count = 0;
   }
 
-  if (reading && count > 10)
+  /* If the message delay time has passed, send 
+  a message. Limiting messages may not be necessary,
+  however, there is no benefit to sending one every
+  loop. */
+  if (millis() - lastTime > msgDelay)
   {
-    webSocket.sendTXT("understand");
+    /* If the switch is HIGH and has been high
+    for the required number of iterations, send
+    UNDERSTAND. This ensures that a LOW will not
+    be mistaken for a HIGH due to switch bouncing. */
+    if (reading && count > highCount)
+    {
+      webSocket.sendTXT("understand");
+    }
+    /* Otherwise, send CONFUSED */
+    else
+    {
+      webSocket.sendTXT("confused");
+    }
+
+    /* Sample the current time */
+    lastTime = millis();
   }
-  else
-  {
-    webSocket.sendTXT("confused");
-  }
+
 } /* loop */

@@ -1,0 +1,67 @@
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+
+<script>
+    /* Register WS on current IP address */
+    const ws = new WebSocket("ws://" + self.location.host);
+
+    ws.onopen = function(event) {
+        ws.send('webpage');
+        console.log('[Webpage] Connected to WebSocket');
+    };
+
+    ws.onmessage = function(event) {
+        /* Switch between message types */
+        switch(JSON.parse(event.data).type)
+        {
+            case 'update':
+                document.getElementById('num_clients').innerHTML = "Connected: " + JSON.parse(event.data).size;
+                document.getElementById('understanding').innerHTML = JSON.parse(event.data).status;
+            break;
+        }
+    }
+</script>
+  
+  <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h1>Digital Student Survey</h1>
+        </div>
+      </div>
+      <div class="row clearfix">
+          <div class="col-md-12 column">
+              <div class="panel panel-warning">
+                <div class="panel-heading">
+                  <h3 class="panel-title">
+                    Displays the level of understanding in realtime.
+                  </h3>
+                </div>                
+              </div>
+            
+
+              <div class="row clearfix">
+                  <div class="col-md-12 column">
+                      <div class="list-group">
+                        
+                          <div class="list-group-item">
+                              <h4 class="list-group-item-heading">
+                                  Understanding Level
+                              </h4>
+                              <p class="list-group-item-text">
+                                <p id="understanding", style="color:blue;font-size:70px;">Offline</p>
+                              </p>
+                          </div>
+                        
+                          <div class="list-group-item">
+                              <h4 class="list-group-item-heading">
+                                  Clients
+                              </h4>
+                              <p class="list-group-item-text">
+                                <p id="num_clients", style="color:blue;font-size:20px;">0</p>
+                              </p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
